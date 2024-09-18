@@ -1,0 +1,36 @@
+{
+  "chats": [
+    {
+      "chatId": -1002413530580,
+      "rateLimiter": {
+        "bucketSize": 1,
+        "refillRate": 1,
+        "refillInterval": 1,
+        "stopAgressiveTimeout": 10,
+        "tokenBucket": {
+          "tokens": 5,
+          "lastRefill": 0
+        }
+      },
+      "notificationChatId": 987654321,
+      "whiteListuserId": [433894487, 1410518469, 1020070195, 6160598480, 411281194],
+      "hoursToOffManualMode": 16
+    },
+    {
+      "chatId": -1002411881163,
+      "rateLimiter": {
+        "bucketSize": 10,
+        "refillRate": 2,
+        "refillInterval": 2,
+        "stopAgressiveTimeout": 30,
+        "tokenBucket": {
+          "tokens": 10,
+          "lastRefill": 0
+        }
+      },
+      "notificationChatId": 987654321,
+      "whiteListuserId": [433894487, 444444444],
+      "hoursToOffManualMode": 24
+    }
+  ]
+}

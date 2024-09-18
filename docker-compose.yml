@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgresql:
+    image: postgres:latest
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_PASSWORD: 51kln00bfd54FTY # Change to your actual password
+      POSTGRES_DB: spam
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: on-failure
+
+  stop-spaming-bot:
+    build: ./stopSpamingBot
+    environment:
+      NODE_ENV: production
+    ports:
+      - "8081:8080"
+    restart: on-failure
+
+
+  anti-join-bot:
+    build: .
+    environment:
+      NODE_ENV: production
+      POSTGRES_USER: postgres
+      POSTGRES_HOST: postgresql
+      POSTGRES_DATABASE: spam
+      POSTGRES_PASSWORD: 51kln00bfd54FTY
+      POSTGRES_PORT: 5432
+      API_ID: 25878568
+      API_HASH: 85c6bb2c350dbfdd79bbc8bf379186f7
+      BOT_TOKEN: 7417672398:AAG0JLkA-rHQHIR9ayaL7UD7AGtBhlGtlC4
+      NOTIF_BOT_TOKEN: 5695172280:AAEZ3Y9rmUYQg3HXnIUYjjznMHTh2PcrwnM
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    restart: on-failure
+    depends_on:
+      - postgresql
+
+volumes:
+  postgres_data: {}
+
+
+ 

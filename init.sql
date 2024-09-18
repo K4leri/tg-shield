@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS telegram_join_requests (
+  id SERIAL PRIMARY KEY,
+  chat_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  request_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  request_status VARCHAR(50) NOT NULL DEFAULT 'pending',
+  join_date TIMESTAMP,
+  leave_date TIMESTAMP,
+  reason TEXT
+);
+
+
+CREATE TABLE IF NOT EXISTS message (
+  id SERIAL PRIMARY KEY,
+  chat_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  message_id INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'stay',
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
