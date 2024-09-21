@@ -16,6 +16,7 @@ export interface ChatConfigFromJson {
   notificationChatId: number;
   whiteListuserId: number[];
   hoursToOffManualMode: number;
+  maxFailedAttemps: number;
 }
 
 export interface Config {

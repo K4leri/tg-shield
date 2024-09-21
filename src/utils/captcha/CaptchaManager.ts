@@ -4,6 +4,9 @@ import AudioCaptcha from "./captchaTypes.ts/audioCaptcha.js";
 import { bot } from "../../clients/tgclient.js";
 import { logger } from "../log/logProvider.js";
 import { html } from '@mtcute/html-parser'
+import { chatManager } from "../chat/ChatManager.js";
+import { deleteSpamMessages } from "../../handlers/utils/deleteSpamMessages.js";
+import ChatConfig from "../chat/ChatConfig.js";
 
 
 enum CaptchaType {
@@ -13,16 +16,14 @@ enum CaptchaType {
 
 class CaptchaManager {
   captchaMap: Map<number, { correctAnswer: number; timeoutId: Timer; message: Message; captchaType: CaptchaType }>;
-  private bot: TelegramClient; // Your bot instance
   private mathCaptcha: MathCaptcha;
   private audioCaptcha: AudioCaptcha;
   private standartType = CaptchaType.Math
   private failedAttempts: Map<number, number> = new Map();
   userIds: number[] = []
 
-  constructor(bot: TelegramClient) {
+  constructor() {
     this.captchaMap = new Map();
-    this.bot = bot;
     this.mathCaptcha = new MathCaptcha(captchaOptions);
     this.audioCaptcha = new AudioCaptcha({voice: "ru-RU-SvetlanaNeural"});
   }
@@ -61,7 +62,7 @@ class CaptchaManager {
     const userNotif = html`${user.username ? `@${user.username},` : html`<a href="tg://user?id=${user.id}">${user.displayName}</a>,` }`
     const caption = html`${userNotif} Посчитай правильное значение для вступления (${captchaType === CaptchaType.Math ? '30' : '30'} сек)`
 
-    const message = await this.bot.sendMedia(chatId, { 
+    const message = await bot.sendMedia(chatId, { 
       fileName: `captcha.${captchaType === CaptchaType.Math ? 'png' : 'mp3'}`,
       type: captchaType === CaptchaType.Math ? 'photo' : 'audio', 
       file: captchaImage, 
@@ -110,7 +111,7 @@ class CaptchaManager {
     }
 
     clearTimeout(timeoutId);
-    await this.bot.deleteMessages([message, msg]);
+    await bot.deleteMessages([message, msg]);
     this.userIds = this.userIds.filter(id => id !== userId)
     this.captchaMap.delete(userId);
     return true;
@@ -118,30 +119,36 @@ class CaptchaManager {
 
   async kickUser(chatId: number, userId: number) {
     const messagesToDelete: Message[] = []
-    const failedAttempts = this.failedAttempts.get(userId) || 0;
-    this.failedAttempts.set(userId, failedAttempts + 1);
-
-    const message = await this.bot.kickChatMember({ chatId, userId});
-    if (message)  messagesToDelete.push(message)
     const captchaData = this.captchaMap.get(userId);
     if (captchaData) {
+      clearTimeout(captchaData.timeoutId);
       messagesToDelete.push(captchaData.message)
       this.captchaMap.delete(userId);
     }
-    this.userIds = this.userIds.filter(id => id !== userId)
-    await this.bot.deleteMessages(messagesToDelete);
 
-    if (failedAttempts >= 2) {
-      await this.banUser(chatId, userId);
-    } 
+    const failedAttempts = (this.failedAttempts.get(userId) || 0) + 1;
+    this.failedAttempts.set(userId, failedAttempts);
+
+    const chatConfig = chatManager.chatConfigs.get(chatId)
+    if (!chatConfig) return logger.warn(`No chat config found for chat ${chatId}`);
+
+    const message = await bot.kickChatMember({ chatId, userId});
+    if (message && (failedAttempts < chatConfig.maxFailedAttemps)) messagesToDelete.push(message)
+
+    this.userIds = this.userIds.filter(id => id !== userId)
+    await bot.deleteMessages(messagesToDelete);
+
+    if (failedAttempts >= chatConfig.maxFailedAttemps) this.banUser(chatConfig, chatId, userId)
   }
 
-  async banUser(chatId: number, userId: number) {
-    await this.bot.banChatMember({ chatId, participantId: userId, untilDate: Date.now() + 86400000 }); // ban for 1 day
+  async banUser(chatConfig: ChatConfig, chatId: number, userId: number) {
+    await bot.banChatMember({ chatId, participantId: userId, untilDate: Date.now() + 86400000 }); // ban for 1 day
+    logger.info(`ban - ${userId} in chat - ${chatId} cause of max attemps`);
+    await deleteSpamMessages(chatConfig, userId)
     this.userIds = this.userIds.filter(id => id !== userId)
     this.captchaMap.delete(userId);
     this.failedAttempts.delete(userId);
   }
 }
 
-export const captchaManager = new CaptchaManager(bot);
+export const captchaManager = new CaptchaManager();

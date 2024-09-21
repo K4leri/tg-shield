@@ -1,14 +1,14 @@
 // ChatConfig.ts
 import EventEmitter from "events";
-import { ChatConfigOptions, links } from "../../types/chatConfig.js";
+import { links } from "../../types/chatConfig.js";
 import RateLimiter from "../ratelimiter/rateLimiter.js";
 import RecentJoinsManager from "./recentJoinsManager.js";
 import { MessageContext } from "@mtcute/dispatcher";
+import { ChatConfigFromJson } from "../../types/config.js";
 
 
 
 class ChatConfig {
-  private eventEmitter: EventEmitter;
   manualApproveMode = false;
   chatId: number;
   rateLimiter: RateLimiter;
@@ -19,6 +19,7 @@ class ChatConfig {
   hoursToOffManualMode: number;
   recentJoinsManager: RecentJoinsManager;
   recentlyBannedUsers: Set<number> = new Set();
+  maxFailedAttemps: number;
   links: links = {
     allInviteLinks : [],
     approvalNeeded: new Set(),
@@ -29,7 +30,7 @@ class ChatConfig {
     chatId: number, 
     rateLimiter: RateLimiter,
     recentJoinsManager: RecentJoinsManager,
-    options: ChatConfigOptions,
+    options: ChatConfigFromJson,
 ) {
     this.chatId = chatId;
     this.rateLimiter = rateLimiter;
@@ -37,11 +38,11 @@ class ChatConfig {
     this.notificationChatId = options.notificationChatId || 0;
     this.whiteListuserId = options.whiteListuserId;
     this.hoursToOffManualMode = (options.hoursToOffManualMode || 16) * 60 * 60 * 1000;
-    this.eventEmitter = new EventEmitter();
+    this.maxFailedAttemps = options.maxFailedAttemps
 
-    this.eventEmitter.on('tokenBucketChanged', () => {
-      this.spamMessages.length = 0
-    });
+    setInterval(() => {
+      this.spamMessages = this.spamMessages.filter(message => message.date.getTime() > Date.now() - 15 * 60 * 1000)
+    }, 15 * 60 * 1000); // every 15 minute
   }
 }
 

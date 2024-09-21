@@ -2,7 +2,7 @@
 import { bot} from '../../clients/tgclient.js';
 import { logger } from '../../utils/log/logProvider.js'; 
 import ChatConfig from '../../utils/chat/ChatConfig.js';
-import { deleteSpamMessages } from '../events/spamDelete.js';
+import { deleteSpamMessages } from './deleteSpamMessages.js';
 
 
 

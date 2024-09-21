@@ -14,7 +14,8 @@
       },
       "notificationChatId": 987654321,
       "whiteListuserId": [433894487, 1410518469, 1020070195, 6160598480, 411281194],
-      "hoursToOffManualMode": 16
+      "hoursToOffManualMode": 16,
+      "maxFailedAttemps": 3
     },
     {
       "chatId": -1002411881163,
@@ -30,7 +31,8 @@
       },
       "notificationChatId": 987654321,
       "whiteListuserId": [433894487, 444444444],
-      "hoursToOffManualMode": 24
+      "hoursToOffManualMode": 24,
+      "maxFailedAttemps": 3
     }
   ]
 }

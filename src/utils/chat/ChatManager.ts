@@ -27,8 +27,7 @@ class ChatManager {
         options.chatId, 
         rateLimiter,
         new RecentJoinsManager(),
-        options,
-        eventEmitter
+        options
       );
       this.chatConfigs.set(options.chatId, chatConfig);
       this.elements++

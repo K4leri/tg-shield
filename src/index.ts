@@ -1,5 +1,5 @@
 // index.ts
-import { ChatInviteLink, ChatMemberUpdate, html, Message } from '@mtcute/bun'
+import { ChatInviteLink, ChatMemberUpdate, Message } from '@mtcute/bun'
 import { filters, MessageContext } from '@mtcute/dispatcher'
 import { bot, botdp, NotifBot, tg } from './clients/tgclient.js';
 import { logger } from './utils/log/logProvider.js';
@@ -9,13 +9,15 @@ import { captchaManager } from './utils/captcha/CaptchaManager.js';
 import { makeAdminAction } from './handlers/events/togglePause.js';
 import { handleJoinRequest } from './handlers/events/joinRequest.js';
 import { handleChatMemberUpdate } from './handlers/events/chatMemberUpdate.js';
-import { adapter } from './db/database.js';
-import { logMessagesOfJoin } from './db/methods.js';
+import { makeCaptchaAnswer } from './handlers/events/underCaptchaSolving.js';
+import { joinMessageLog } from './handlers/events/joinMessage.js';
 
 export const barLogger = new LogManipulater()
 
 
-botdp.onChatJoinRequest(async (upd) =>  await handleJoinRequest(upd));
+botdp.onChatJoinRequest(
+  async (upd) =>  await handleJoinRequest(upd)
+);
 
 
 botdp.onChatMemberUpdate(
@@ -39,15 +41,7 @@ botdp.onNewMessage(
     filters.action(['user_joined_link', 'user_joined_approved']), 
     (msg: MessageContext) => chatManager.allowChatId.includes(msg.chat.id)
   ),
-  async (upd) => {
-    const chatConfig = chatManager.chatConfigs.get(upd.chat.id)
-    if (!chatConfig) return logger.warn(`No chat config found for chat ${upd.chat.id}`);
-    chatConfig.spamMessages.concat(upd.messages)
-    const messages = upd.messages.map(message => {
-      return {"message_id": message.id, "chat_id": upd.chat.id, "user_id": upd.sender.id, status: 'stay'}
-    })
-    await logMessagesOfJoin(adapter, messages)
-  }
+  async (upd) => await joinMessageLog(upd)
 );
 
 
@@ -65,20 +59,29 @@ botdp.onNewMessage(
 );
 
 
+botdp.onNewMessage(
+  (msg: Message) => {
+    if (!chatManager.allowChatId.includes(msg.chat.id)) return false
+    if (!/\/unban\s+(?:\d+| \d+)?/.test(msg.text)) return false;
+    const chatConfig = chatManager.chatConfigs.get(msg.chat.id)
+    if (!chatConfig) return false
+    if (!chatConfig.whiteListuserId.includes(msg.sender.id)) return false
+    return true
+  }, 
+  async (msg) => {
+    await msg.delete()
+    await bot.unbanChatMember({chatId: msg.chat.id, participantId: msg.text.split(' ')[1]})
+  }
+);
+
 
 botdp.onNewMessage(
   filters.and(
     filters.not(filters.action('user_joined_approved')),
     (msg: Message) => captchaManager.userIds.includes(msg.sender.id),
   ),
-  async (msg: MessageContext) => {
-    if (!(msg.text && !isNaN(Number(msg.text)) && Number.isInteger(Number(msg.text)))) {
-      await msg.delete()
-      return await captchaManager.kickUser(msg.chat.id,  msg.sender.id)
-    }
-    
-    await captchaManager.verifyAnswer(msg.chat.id, msg.sender.id, msg)
-})
+  async (msg: MessageContext) => await makeCaptchaAnswer(msg)
+)
 
 
 
@@ -95,6 +98,7 @@ function callback() {
 bot.run({ botToken: process.env.BOT_TOKEN }, async (self) => {
   logger.start(`Logged in as ${self.username}`)
   callback()
+  await bot.unbanChatMember({chatId: -1002413530580, participantId: 7432055163})
 })
 
 // человек может выйти до того, как его кикнет
