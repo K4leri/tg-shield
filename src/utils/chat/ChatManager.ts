@@ -5,34 +5,34 @@ import RecentJoinsManager from "./recentJoinsManager.js";
 import { ChatConfigFromJson } from "../../types/config.js";
 import { config } from "../config.js";
 import { logChatConfig } from "../log/initLog.js";
+import EventEmitter from "events";
 
 
 class ChatManager {
-    // whiteListId: Set<number> = new Set<number>();
+    allowChatId: number[] = []
     chatConfigs: Map<number, ChatConfig> = new Map();
     elements: number = 0;
 
     constructor() {
       config.chats.forEach(chat => {
         this.addChatConfig(chat)
+        this.allowChatId.push(chat.chatId)
       })
     }
   
-    addChatConfig(
-      options: ChatConfigFromJson
-    ) {
-        const chatConfig = new ChatConfig(
-          options.chatId, 
-          new RateLimiter(options),
-          new RecentJoinsManager(),
-          options
-        );
-        this.chatConfigs.set(options.chatId, chatConfig);
-        this.elements++
-        // options.whiteListuserId.forEach(adminId => {
-        //   this.whiteListId.add(adminId)
-        // })
-        logChatConfig(options, this.elements)
+    addChatConfig(options: ChatConfigFromJson) {
+      const eventEmitter = new EventEmitter();
+      const rateLimiter = new RateLimiter(options, eventEmitter)
+      const chatConfig = new ChatConfig(
+        options.chatId, 
+        rateLimiter,
+        new RecentJoinsManager(),
+        options,
+        eventEmitter
+      );
+      this.chatConfigs.set(options.chatId, chatConfig);
+      this.elements++
+      logChatConfig(options, this.elements)
     }
 
 

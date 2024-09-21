@@ -3,7 +3,7 @@ import { logger } from "../log/logProvider.js";
 import { TokenBucket } from "../../types/token.js";
 import ProgressBar from "./progressBar.js";
 import { ChatConfigFromJson } from "../../types/config.js";
-import eventEmitter from '../eventEmitter.js';
+import EventEmitter from "events";
 
 
 /**
@@ -17,11 +17,12 @@ class RateLimiter {
   private stopped: boolean;
   private timeoutId: Timer  | null;
   private intervalId: Timer | null;
+  private eventEmitter: EventEmitter;
   progressBar: ProgressBar;
   bucketSize: number;
   tokenBucket: TokenBucket;
 
-  constructor(options: ChatConfigFromJson) {
+  constructor(options: ChatConfigFromJson, eventEmitter: EventEmitter) {
     // this.chatId = chatId;
     this.bucketSize = options.rateLimiter.bucketSize || 5;
     this.tokenBucket = {
@@ -34,11 +35,12 @@ class RateLimiter {
     this.stopped = false;
     this.timeoutId = null;
     this.intervalId = null;
+    this.eventEmitter = eventEmitter;
     this.progressBar = new ProgressBar({
       bucketSize: this.bucketSize, 
       chatId: options.chatId,
-      maxLengthOfBar: options.maxLengthOfBar || 50
-    });
+      maxLengthOfBar: options.maxLengthOfBar || 50,
+    }, eventEmitter)
   }
 
   /**
@@ -47,7 +49,7 @@ class RateLimiter {
   private refillTokens(): void {
     this.tokenBucket.tokens = Math.min(this.bucketSize, this.tokenBucket.tokens + this.refillRate);
     this.tokenBucket.lastRefill = Date.now();
-    eventEmitter.emit('tokenBucketChanged', this.tokenBucket);
+    this.eventEmitter.emit('tokenBucketChanged', this.tokenBucket);
   
     if (this.tokenBucket.tokens === this.bucketSize) {
       clearInterval(this.intervalId!);
@@ -65,7 +67,7 @@ class RateLimiter {
     const tokensToAdd = timeSinceLastRefill >= this.refillInterval ? this.refillRate : 1;
     this.tokenBucket.tokens = Math.min(this.bucketSize, this.tokenBucket.tokens + tokensToAdd);
     this.tokenBucket.lastRefill = Date.now();
-    eventEmitter.emit('tokenBucketChanged', this.tokenBucket);
+    this.eventEmitter.emit('tokenBucketChanged', this.tokenBucket);
     if (this.tokenBucket.tokens < this.bucketSize) {
       this.intervalId = setInterval(() => {
         this.refillTokens();
@@ -97,7 +99,7 @@ class RateLimiter {
           this.refillTokens();
         }, this.refillInterval);
       }
-      eventEmitter.emit('tokenBucketChanged', this.tokenBucket);
+      this.eventEmitter.emit('tokenBucketChanged', this.tokenBucket);
       return true;
     } else {
       if (!this.stopped) this.stop(chatId);

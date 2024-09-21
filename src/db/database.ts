@@ -64,4 +64,5 @@ class DatabaseAdapter {
   }
 }
 
-export default DatabaseAdapter;
+const databaseAdapter = new DatabaseAdapter();
+export const adapter = databaseAdapter.getAdapter();

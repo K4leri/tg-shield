@@ -1,21 +1,22 @@
 // index.ts
-import { ChatInviteLink, ChatMemberUpdate, Message } from '@mtcute/bun'
+import { ChatInviteLink, ChatMemberUpdate, html, Message } from '@mtcute/bun'
 import { filters, MessageContext } from '@mtcute/dispatcher'
 import { bot, botdp, NotifBot, tg } from './clients/tgclient.js';
-import { adapter, joinRequestHandler } from './handlers/joinRequestHandler.js';
 import { logger } from './utils/log/logProvider.js';
-import { getAllMessagesToDelete, logMessageJoin } from './db/methods.js';
 import LogManipulater from './utils/log/logManipulater.js';
 import { chatManager } from './utils/chat/ChatManager.js';
 import { captchaManager } from './utils/captcha/CaptchaManager.js';
+import { makeAdminAction } from './handlers/events/togglePause.js';
+import { handleJoinRequest } from './handlers/events/joinRequest.js';
+import { handleChatMemberUpdate } from './handlers/events/chatMemberUpdate.js';
+import { adapter } from './db/database.js';
+import { logMessagesOfJoin } from './db/methods.js';
 
 export const barLogger = new LogManipulater()
 
 
-botdp.onChatJoinRequest(async (upd) => {
-  //@ts-expect-error
-  await joinRequestHandler.handleJoinRequest(upd);
-});
+botdp.onChatJoinRequest(async (upd) =>  await handleJoinRequest(upd));
+
 
 botdp.onChatMemberUpdate(
   filters.and(
@@ -27,99 +28,59 @@ botdp.onChatMemberUpdate(
     filters.chatMember(['left', 'joined', 'added']),
     (upd: ChatMemberUpdate) => !upd.actor.isBot
   ),
-  async (upd) => {
-    //@ts-expect-error
-    await joinRequestHandler.handleChatMemberUpdate(upd);
-  }
+  async (upd) => await handleChatMemberUpdate(upd)
 );
 
 
+
+// delete spam message on attack
 botdp.onNewMessage(
   filters.and(
-    filters.action('user_joined_link'), 
-    // (msg: MessageContext) => {
-    //   const chatConfig = chatManager.chatConfigs.get(msg.chat.id)
-    //   if (!chatConfig) return false
-    //   if (!chatConfig..includes(msg.sender.id)) return false
-    //   return true
-    // }
+    filters.action(['user_joined_link', 'user_joined_approved']), 
+    (msg: MessageContext) => chatManager.allowChatId.includes(msg.chat.id)
   ),
   async (upd) => {
-    const chatId = upd.chat.id
- 
-    const tokenBucket = joinRequestHandler.handleMessageJoin(chatId)
-    if (tokenBucket?.tokens === 0) {
-      const messages = await getAllMessagesToDelete(adapter, chatId, tokenBucket.lastRefill)
-      if (messages.length) {
-        logger.info(`Приступил к удалению ${messages.length} сообщений о поступивших заявках`)
-        const batchSize = 10
-        const batches = Math.ceil(messages.length / batchSize);
-
-        for (let i = 0; i < batches; i++) {
-          const batch = messages.slice(i * batchSize, (i + 1) * batchSize);
-          await bot.deleteMessagesById(
-            messages[0].chatId,
-            batch.map(message => message.messageId)
-          );
-        }
-      }
-      
-      await logMessageJoin(adapter, chatId, upd.sender.id, upd.messages[0].id, 'ban')
-      return await upd.delete();
-    }
-
-    await logMessageJoin(adapter, chatId, upd.sender.id, upd.messages[0].id)
+    const chatConfig = chatManager.chatConfigs.get(upd.chat.id)
+    if (!chatConfig) return logger.warn(`No chat config found for chat ${upd.chat.id}`);
+    chatConfig.spamMessages.concat(upd.messages)
+    const messages = upd.messages.map(message => {
+      return {"message_id": message.id, "chat_id": upd.chat.id, "user_id": upd.sender.id, status: 'stay'}
+    })
+    await logMessagesOfJoin(adapter, messages)
   }
 );
 
 
-let timeOut: Timer;
 
 botdp.onNewMessage(
   (msg: Message) => {
+    if (!chatManager.allowChatId.includes(msg.chat.id)) return false
     if (!/\/toggle|\/type(?:\d+| \d+)?/.test(msg.text)) return false;
     const chatConfig = chatManager.chatConfigs.get(msg.chat.id)
     if (!chatConfig) return false
     if (!chatConfig.whiteListuserId.includes(msg.sender.id)) return false
     return true
   }, 
-  async (msg) => {
-    await msg.delete()
-    const chatConfig = chatManager.chatConfigs.get(msg.chat.id)!
-    if (msg.text.includes('/type')) return captchaManager.changeCaptchaType(parseInt(msg.text.replace('/type', '')));
-
-    chatConfig.manualApproveMode = !chatConfig.manualApproveMode;
-    if (chatConfig.manualApproveMode) {
-      logger.warn(`Включил ручной режим работы в чате ${msg.chat.id}, автоматически данный режим отключится через ${chatConfig.hoursToOffManualMode / (60 * 60 * 1000)} часов`)
-      await msg.answerText(`Включил ручной режим работы`)
-      timeOut = setTimeout(async () => {
-        logger.warn(`Отключил ручной режим работы в чате ${msg.chat.id}`)
-        chatConfig.manualApproveMode = true
-        await msg.answerText(`Отключил ручной режим работы`);
-      }, chatConfig.hoursToOffManualMode);
-    } else {
-      clearTimeout(timeOut);
-      logger.warn(`Отключил ручной режим работы в чате ${msg.chat.id}`)
-      await msg.answerText(`Ручной режим работы отключен`);
-    }
-  }
+  async (msg) => await makeAdminAction(msg)
 );
 
 
 
 botdp.onNewMessage(
-  (msg) => {
-    return captchaManager.userIds.includes(msg.sender.id)
-  },
-  async (msg) => {
+  filters.and(
+    filters.not(filters.action('user_joined_approved')),
+    (msg: Message) => captchaManager.userIds.includes(msg.sender.id),
+  ),
+  async (msg: MessageContext) => {
     if (!(msg.text && !isNaN(Number(msg.text)) && Number.isInteger(Number(msg.text)))) {
       await msg.delete()
       return await captchaManager.kickUser(msg.chat.id,  msg.sender.id)
     }
     
     await captchaManager.verifyAnswer(msg.chat.id, msg.sender.id, msg)
-    return
 })
+
+
 
 
 
@@ -135,17 +96,16 @@ bot.run({ botToken: process.env.BOT_TOKEN }, async (self) => {
   logger.start(`Logged in as ${self.username}`)
   callback()
 })
+
 // человек может выйти до того, как его кикнет
 tg.run(async (user) => {
   logger.start(`Logged in as ${user.username}`)
   callback()
-  // await tg.unbanChatMember({chatId: -1002413530580, participantId: 7432055163})
   const chatConfigs = chatManager.chatConfigs.values()
   for (const chatConfig of chatConfigs) {
     const links = await tg.getInviteLinks(chatConfig.chatId)
     for (const link of links) {
       if (link instanceof ChatInviteLink) {
-        //@ts-expect-error
         chatConfig.links.allInviteLinks.push(link)
       }
     }

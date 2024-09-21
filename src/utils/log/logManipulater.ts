@@ -12,19 +12,19 @@ class LogManipulater {
     }
     
     async updateChatBars(): Promise<void> {
-        // const array = Array.from(chatManager.chatConfigs.values())
+        const array = Array.from(chatManager.chatConfigs.values())
         
-        // let someTokenZero = false
-        // for (const progressData of array) {
-        //     const { rateLimiter: { tokenBucket: { tokens } } } = progressData;
-        //     if (!tokens) someTokenZero = true;
-        //     const progressBar = progressData.rateLimiter.progressBar.getProgressBar(tokens);
-        //     process.stdout.write(`${progressBar}\n`);
-        // }
+        let someTokenZero = false
+        for (const progressData of array) {
+            const { rateLimiter: { tokenBucket: { tokens } } } = progressData;
+            if (!tokens) someTokenZero = true;
+            const progressBar = progressData.rateLimiter.progressBar.getProgressBar(tokens);
+            process.stdout.write(`${progressBar}\n`);
+        }
     
-        // if (someTokenZero) {
-        //     this.startBlinking();
-        // }
+        if (someTokenZero) {
+            this.startBlinking();
+        }
     }
 
 
@@ -53,10 +53,10 @@ class LogManipulater {
     
 
     clearProgressBar(): void {
-        // process.stdout.write(ansiEscapes.cursorUp(
-        //     this._elements
-        // ));
-        // process.stdout.write(ansiEscapes.eraseDown);
+        process.stdout.write(ansiEscapes.cursorUp(
+            this._elements
+        ));
+        process.stdout.write(ansiEscapes.eraseDown);
     }
 
     stopBlinking(): void {

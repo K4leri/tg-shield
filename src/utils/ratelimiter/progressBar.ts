@@ -1,13 +1,13 @@
 import { ProgressBarSettings } from "../../types/progressDataInterface.js";
 import chalk from 'chalk';
-import eventEmitter from "../eventEmitter.js";
 import { barLogger } from "../../index.js";
+import EventEmitter from "events";
 
 // progressBar.ts
 class ProgressBar {
     progressBarSettings: ProgressBarSettings;
 
-    constructor(progressBarSettings: ProgressBarSettings) {
+    constructor(progressBarSettings: ProgressBarSettings, eventEmitter: EventEmitter) {
         this.progressBarSettings = progressBarSettings
         eventEmitter.on('tokenBucketChanged', () => {
             barLogger.clearProgressBar();

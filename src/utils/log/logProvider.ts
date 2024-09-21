@@ -42,27 +42,27 @@ class LogProvider {
   }
 
   info(message: string) {
-    // barLogger.clearProgressBar();
+    barLogger.clearProgressBar();
     this.mainLogger.info(message);
-    // barLogger.updateChatBars();
+    barLogger.updateChatBars();
   }
 
   debug(message: string) {
-    // barLogger.clearProgressBar();
+    barLogger.clearProgressBar();
     this.mainLogger.debug(message);
-    // barLogger.updateChatBars();
+    barLogger.updateChatBars();
   }
 
   warn(message: string) {
-    // barLogger.clearProgressBar();
+    barLogger.clearProgressBar();
     this.mainLogger.warn(message);
-    // barLogger.updateChatBars();
+    barLogger.updateChatBars();
   }
 
   error(message: string) {
-    // barLogger.clearProgressBar();
+    barLogger.clearProgressBar();
     this.mainLogger.error(message);
-    // barLogger.updateChatBars();
+    barLogger.updateChatBars();
   }
 }
 

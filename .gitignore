@@ -5,7 +5,7 @@ bot-data/
 *.js.map
 *.tsbuildinfo
 tsconfig.tsbuildinfo
-.docker-compose.yml
+docker-compose.yml
 .idea/
 .vscode/
 .atom/
