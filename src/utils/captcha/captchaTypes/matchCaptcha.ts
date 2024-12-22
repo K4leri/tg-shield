@@ -20,7 +20,6 @@ class MathCaptcha {
     const parentDir = __dirname.split(path.sep).slice(0, -1).join(path.sep);
     const fontPath = path.join(parentDir, "fonts/Comismsh.ttf");
     const fontName = "Comismsh";
-    console.log(fontPath);
     canvas.registerFont(fontPath, { family: fontName });
 
     // Set the font
