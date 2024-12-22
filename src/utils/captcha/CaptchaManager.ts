@@ -1,6 +1,6 @@
 import { Message, TelegramClient, User } from "@mtcute/bun";
-import MathCaptcha, { captchaOptions } from "./captchaTypes.ts/matchCaptcha.js";
-import AudioCaptcha from "./captchaTypes.ts/audioCaptcha.js";
+import MathCaptcha, { captchaOptions } from "./captchaTypes/matchCaptcha.js";
+import AudioCaptcha from "./captchaTypes/audioCaptcha.js";
 import { bot } from "../../clients/tgclient.js";
 import { logger } from "../log/logProvider.js";
 import { html } from "@mtcute/html-parser";
