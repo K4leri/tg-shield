@@ -1,34 +1,39 @@
-FROM oven/bun:1 AS base
-WORKDIR /usr/src/app
+FROM oven/bun AS build
+WORKDIR /app 
 
-# install dependencies into temp directory
-# this will cache them and speed up future builds
-FROM base AS install
-RUN mkdir -p /temp/dev
-COPY package.json bun.lockb /temp/dev/
+# install dependencies 
 RUN apt update && apt install -y python3 make gcc g++
-RUN cd /temp/dev && bun install --frozen-lockfile
 
-# install with --production (exclude devDependencies)
-RUN mkdir -p /temp/prod
-COPY package.json bun.lockb /temp/prod/
-RUN cd /temp/prod && bun install --frozen-lockfile --production
+# Cache packages installation
+COPY package.json bun.lockb ./
+RUN bun install
 
-# then copy all (non-ignored) project files into the image
-FROM base AS prerelease
-COPY --from=install /temp/dev/node_modules node_modules
-COPY . .
+COPY ./src ./src
+COPY ./config.json config.json
+COPY ./bot-data /app/bot-data
+COPY ./src/utils/captcha/fonts/Comismsh.ttf /app/fonts/Comismsh.ttf
 
-# copy production dependencies and source code into final image
-FROM base AS release
-COPY --from=install /temp/prod/node_modules node_modules
-WORKDIR /usr/src/app/src
-COPY --from=prerelease /usr/src/app/src/index.ts .
-COPY --from=prerelease /usr/src/app/package.json ..
+ENV NODE_ENV=production
 
-RUN mkdir -p /usr/src/app/bot-data && \
-    chown -R bun:bun /usr/src/app/bot-data
+RUN bun build \
+    --compile \
+    --minify-whitespace \
+    --minify-syntax \
+    --target bun \
+    --outfile server \
+    ./src/index.ts
 
-# run the app
-USER bun
-ENTRYPOINT [ "bun", "run", "index.ts" ]
+# Set permissions for the server file
+RUN chmod 755 server
+
+FROM gcr.io/distroless/base
+
+WORKDIR /app
+
+COPY --from=build /app/server server
+
+USER 1001
+
+ENV NODE_ENV=production
+
+CMD ["./server"]

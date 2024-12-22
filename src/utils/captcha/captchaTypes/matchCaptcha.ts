@@ -16,9 +16,16 @@ class MathCaptcha {
     this.canvas = canvas.createCanvas(options.width, options.height);
     this.ctx = this.canvas.getContext("2d");
 
+    // let fontPath: string = ''
     // Register the font
-    const parentDir = __dirname.split(path.sep).slice(0, -1).join(path.sep);
-    const fontPath = path.join(parentDir, "fonts/Comismsh.ttf");
+
+    const fontPath =
+      process.env.NODE_ENV === "production"
+        ? path.join("/app", "fonts/Comismsh.ttf")
+        : path.join(
+            __dirname.split(path.sep).slice(0, -1).join(path.sep),
+            "fonts/Comismsh.ttf"
+          );
     const fontName = "Comismsh";
     canvas.registerFont(fontPath, { family: fontName });
 
