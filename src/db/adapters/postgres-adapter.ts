@@ -1,8 +1,8 @@
 // adapters/postgres-concrete-adapter.ts
-import AbstractAdapter from './abstract-adapter.js';
-import PostgresAdapter from '../postgres.js';
-import postgres from 'postgres';
-import { PostgresSettings } from '../../types/dbData.js';
+import AbstractAdapter from "./abstract-adapter.js";
+import PostgresAdapter from "../postgres.js";
+import postgres from "postgres";
+import { PostgresSettings } from "../../types/dbData.js";
 
 class PostgresConcreteAdapter extends AbstractAdapter {
   private postgresAdapter: PostgresAdapter;

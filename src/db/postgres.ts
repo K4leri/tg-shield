@@ -1,6 +1,6 @@
 // adapters/postgres.ts
-import postgres from 'postgres';
-import { PostgresSettings } from '../types/dbData.js';
+import postgres from "postgres";
+import { PostgresSettings } from "../types/dbData.js";
 
 class PostgresAdapter {
   public sql: postgres.Sql<{}>;

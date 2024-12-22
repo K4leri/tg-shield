@@ -1,7 +1,7 @@
 {
   "chats": [
     {
-      "chatId": -1002413530580,
+      "chatId": -1002322918096,
       "rateLimiter": {
         "bucketSize": 5,
         "refillRate": 1,
@@ -12,13 +12,14 @@
           "lastRefill": 0
         }
       },
+      "sendCapctha": true,
       "notificationChatId": 987654321,
-      "whiteListuserId": [433894487, 1410518469, 1020070195, 6160598480, 411281194],
+      "whiteListuserId": [433894487],
       "hoursToOffManualMode": 16,
       "maxFailedAttemps": 3
     },
     {
-      "chatId": -1002411881163,
+      "chatId": -1002365690752,
       "rateLimiter": {
         "bucketSize": 10,
         "refillRate": 2,
@@ -29,8 +30,9 @@
           "lastRefill": 0
         }
       },
+      "sendCapctha": false,
       "notificationChatId": 987654321,
-      "whiteListuserId": [433894487, 444444444],
+      "whiteListuserId": [433894487],
       "hoursToOffManualMode": 24,
       "maxFailedAttemps": 3
     }

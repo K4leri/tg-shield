@@ -1,25 +1,25 @@
 // logProvider.ts
-import winston from 'winston';
-import chalk from 'chalk';
-import { barLogger } from '../../index.js';
+import winston from "winston";
+import chalk from "chalk";
+import { barLogger } from "../../index.js";
 
 class LogProvider {
   private mainLogger: winston.Logger;
-  
+
   constructor() {
     this.mainLogger = winston.createLogger({
-      level: 'debug',
+      level: "debug",
       format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.colorize({
           colors: {
-            debug: 'blue',
-            info: 'green',
-            warn: 'yellow',
-            error: 'red'
+            debug: "blue",
+            info: "green",
+            warn: "yellow",
+            error: "red",
           },
           message: true, // Colorize the message text
-          level: true // Colorize the level text
+          level: true, // Colorize the level text
         }),
         winston.format.printf((info) => {
           return `${chalk.magenta(info.timestamp)} ${info.level}: ${info.message}`;
@@ -27,9 +27,9 @@ class LogProvider {
       ),
       transports: [
         new winston.transports.Console({
-          handleExceptions: true
-        })
-      ]
+          handleExceptions: true,
+        }),
+      ],
     });
   }
 

@@ -1,14 +1,13 @@
 // config.ts
-import PostgresConcreteAdapter from './adapters/postgres-adapter.js'; 
-import NullAdapter from './adapters/null-adapter.js'; 
-import { PostgresSettings } from '../types/dbData.js'; 
+import PostgresConcreteAdapter from "./adapters/postgres-adapter.js";
+import NullAdapter from "./adapters/null-adapter.js";
+import { PostgresSettings } from "../types/dbData.js";
 
 class Database {
   private static instance: Database;
   private postgresAdapterAvailable: boolean;
   private postgresSettings: PostgresSettings;
   private adapter: PostgresConcreteAdapter | NullAdapter;
-
 
   private constructor() {
     this.postgresSettings = {
@@ -20,13 +19,12 @@ class Database {
     };
 
     //@ts-ignore
-    this.postgresAdapterAvailable = (
+    this.postgresAdapterAvailable =
       this.postgresSettings.user &&
       this.postgresSettings.host &&
       this.postgresSettings.database &&
       this.postgresSettings.password &&
-      this.postgresSettings.port
-    );
+      this.postgresSettings.port;
 
     if (this.postgresAdapterAvailable) {
       this.adapter = new PostgresConcreteAdapter(this.postgresSettings);

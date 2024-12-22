@@ -6,8 +6,8 @@
 //     chatId: number; // Update chatId to be a string
 // }
 
-export interface ProgressBarSettings{ 
+export interface ProgressBarSettings {
   maxLengthOfBar: number;
-  bucketSize: number, 
-  chatId: number 
+  bucketSize: number;
+  chatId: number;
 }

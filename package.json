@@ -14,31 +14,31 @@
     "captcha": "bun run --compile --watch src/utils/captcha/captchaGen.ts"
   },
   "dependencies": {
-    "@lobehub/tts": "^1.24.3",
-    "@mtcute/bun": "^0.16.9",
+    "@lobehub/tts": "^1.25.8",
+    "@mtcute/bun": "^0.16.14",
     "@mtcute/core": "0.16.9",
     "@mtcute/crypto-node": "^0.16.9",
-    "@mtcute/dispatcher": "^0.16.9",
+    "@mtcute/dispatcher": "^0.16.13",
     "@mtcute/html-parser": "^0.16.9",
     "ansi-escapes": "^7.0.0",
-    "canvas": "^3.0.0-rc2",
-    "postgres": "^3.4.4",
-    "winston": "^3.14.2"
+    "canvas": "^3.0.0-rc3",
+    "postgres": "^3.4.5",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/node": "^20.16.5",
+    "@types/node": "^20.17.10",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-import-resolver-typescript": "^3.7.0",
     "eslint-plugin-ascii": "^1.0.0",
-    "eslint-plugin-import": "^2.30.0",
+    "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-simple-import-sort": "^12.1.1",
-    "husky": "^9.1.6",
-    "lint-staged": "^15.2.10",
-    "prettier": "^3.3.3",
-    "typescript": "^5.6.2"
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.11",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2"
   }
 }

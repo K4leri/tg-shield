@@ -1,5 +1,5 @@
 // rateLimiter.ts
 export interface TokenBucket {
-    tokens: number;
-    lastRefill: number; // in milliseconds
+  tokens: number;
+  lastRefill: number; // in milliseconds
 }

@@ -1,5 +1,3 @@
-
-
 export interface ChatConfigFromJson {
   chatId: number;
   rateLimiter: {
@@ -12,6 +10,7 @@ export interface ChatConfigFromJson {
       lastRefill: number;
     };
   };
+  sendCapctha: boolean;
   maxLengthOfBar?: number;
   notificationChatId: number;
   whiteListuserId: number[];
