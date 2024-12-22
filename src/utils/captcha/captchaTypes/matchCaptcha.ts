@@ -19,6 +19,7 @@ class MathCaptcha {
     // Register the font
     const fontPath = path.join("./src/utils/captcha/fonts", "Comismsh.ttf");
     const fontName = "Comismsh";
+    console.log(fontPath);
     canvas.registerFont(fontPath, { family: fontName });
 
     // Set the font
