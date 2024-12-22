@@ -26,6 +26,9 @@ WORKDIR /usr/src/app/src
 COPY --from=prerelease /usr/src/app/src/index.ts .
 COPY --from=prerelease /usr/src/app/package.json ..
 
+RUN mkdir -p /usr/src/app/bot-data && \
+    chown -R bun:bun /usr/src/app/bot-data
+
 # run the app
 USER bun
 ENTRYPOINT [ "bun", "run", "index.ts" ]
