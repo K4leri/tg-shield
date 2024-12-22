@@ -101,8 +101,19 @@ tg.run(async (user) => {
   logger.start(`Logged in as ${user.username}`);
   callback();
   const chatConfigs = chatManager.chatConfigs.values();
+
+  const chatIds = Array.from(
+    chatConfigs
+      .map((config) => config.chatId)
+      .filter((id): id is number => id != null)
+  );
+
+  await tg.findDialogs(chatIds);
+
   for (const chatConfig of chatConfigs) {
     const links = await tg.getInviteLinks(chatConfig.chatId);
+    if (!links) continue;
+
     for (const link of links) {
       if (link instanceof ChatInviteLink) {
         //@ts-expect-error

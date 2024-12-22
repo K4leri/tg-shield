@@ -28,5 +28,6 @@ export async function handleChatMemberUpdate(upd: ChatMemberUpdate) {
 
   if (upd.type !== "left" && chatConfig.sendCapctha)
     // this make cause user can left group and it will consume token but we dont need to send captcha him
+    //@ts-expect-error
     await captchaManager.sendCaptcha(chatId, upd.user);
 }

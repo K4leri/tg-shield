@@ -1,31 +1,31 @@
 FROM oven/bun:1 AS base
 WORKDIR /usr/src/app
 
-# Install system dependencies in a single layer
-FROM base AS deps
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    gcc \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
+# install dependencies into temp directory
+# this will cache them and speed up future builds
+FROM base AS install
+RUN mkdir -p /temp/dev
+COPY package.json bun.lockb /temp/dev/
+RUN apt update && apt install -y python3 make gcc g++
+RUN cd /temp/dev && bun install --frozen-lockfile
 
-# Copy only package files first to leverage build cache
-FROM deps AS install
-COPY package.json bun.lockb ./
+# install with --production (exclude devDependencies)
+RUN mkdir -p /temp/prod
+COPY package.json bun.lockb /temp/prod/
+RUN cd /temp/prod && bun install --frozen-lockfile --production
 
-# Install dependencies
-RUN bun install --frozen-lockfile
-
-# Copy source code
-FROM install AS build
+# then copy all (non-ignored) project files into the image
+FROM base AS prerelease
+COPY --from=install /temp/dev/node_modules node_modules
 COPY . .
 
-# Final stage
+# copy production dependencies and source code into final image
 FROM base AS release
-COPY --from=install /usr/src/app/node_modules ./node_modules
-COPY --from=build /usr/src/app/src ./src
-COPY --from=build /usr/src/app/package.json ./
+COPY --from=install /temp/prod/node_modules node_modules
+WORKDIR /usr/src/app/src
+COPY --from=prerelease /usr/src/app/src/index.ts .
+COPY --from=prerelease /usr/src/app/package.json ..
 
+# run the app
 USER bun
-ENTRYPOINT [ "bun", "run", "src/index.ts" ]
+ENTRYPOINT [ "bun", "run", "index.ts" ]
