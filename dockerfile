@@ -1,39 +1,46 @@
-FROM oven/bun AS build
+FROM oven/bun:latest AS build
 WORKDIR /app 
 
-# install dependencies 
-RUN apt update && apt install -y python3 make gcc g++
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    gcc \
+    g++ \
+    fontconfig
 
-# Cache packages installation
+# Cache dependencies
 COPY package.json bun.lockb ./
-RUN bun install
+RUN bun install --production
 
+# Copy source files
 COPY ./src ./src
-COPY ./config.json config.json
-COPY ./bot-data /app/bot-data
-COPY ./src/utils/captcha/fonts/Comismsh.ttf /app/fonts/Comismsh.ttf
+COPY ./config.json ./
+COPY ./bot-data ./bot-data
+COPY ./src/utils/captcha/fonts/Comismsh.ttf ./fonts/Comismsh.ttf
 
-ENV NODE_ENV=production
+# Compile TypeScript
+RUN bun build ./src/index.ts --compile --target bun
 
-RUN bun build \
-    --compile \
-    --minify-whitespace \
-    --minify-syntax \
-    --target bun \
-    --outfile server \
-    ./src/index.ts
+FROM debian:bullseye-slim
 
-# Set permissions for the server file
-RUN chmod 755 server
-
-FROM gcr.io/distroless/base
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    fontconfig \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY --from=build /app/server server
+# Copy compiled binary and necessary files
+COPY --from=build /app/index /app/index
+COPY --from=build /app/config.json /app/config.json
+COPY --from=build /app/bot-data /app/bot-data
+COPY --from=build /app/fonts /app/fonts
 
+# Set non-root user
 USER 1001
 
 ENV NODE_ENV=production
 
-CMD ["./server"]
+# Run the compiled binary
+CMD ["/app/index"]

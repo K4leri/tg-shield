@@ -9,9 +9,10 @@
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "format": "prettier --write \"src/**/*.ts\"",
-    "build": "tsc",
+    "build": "bun build ./src/index.ts --outdir dist",
     "dev": "bun run --watch src/index.ts",
-    "captcha": "bun run --compile --watch src/utils/captcha/captchaGen.ts"
+    "captcha": "bun run --compile --watch src/utils/captcha/captchaGen.ts",
+    "start": "bun run dist/index.js"
   },
   "dependencies": {
     "@lobehub/tts": "^1.25.8",
